@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 def extract_amount(dirpath: str) -> float:
 
     dirpath = os.path.join(dirpath, 'ocr.json')
-    #Extracting the text from ocr.json
     with open(dirpath, 'r', encoding='utf-8') as f:
         db =json.load(f)
     text = ""
@@ -29,20 +28,12 @@ def extract_amount(dirpath: str) -> float:
         if 'Text' in db["Blocks"][i]:
             text += " " + db["Blocks"][i]["Text"]
     f.close()
-    #Text pre-processing
-    text = re.sub(r"[,;@#?!&:]+", ' ', text.lower())
-    text = text.replace("usd", "$")
-    text = text.replace('$ ', '$')
+    text = textPreProcessing(text)
     token_list = text.split()
-    #Extracting all money-related terms using NLP and regex
     final_amount = None
-    nlp = spacy.load("en_core_web_sm")
-    doc = nlp(text)
     common_words = ["payments", "total", "amount", "credit", "payment"]
-    extracted_text = [ent.text for ent in doc.ents if ent.label_ == 'MONEY']
-    regex = r"[£$€]\s*[.,\d ]+"
-    extracted_text.extend(re.findall(regex, text, re.I))
-    for i in range(len(extracted_text)):
+    extracted_text = extractMoney(text)
+    for i, _ in enumerate(extracted_text):
         extracted_text[i] = extracted_text[i].replace('$', '')
         try:
             extracted_text[i] = float(extracted_text[i].strip().replace(' ', '.'))
@@ -63,3 +54,15 @@ def extract_amount(dirpath: str) -> float:
         regex = r"[£$€]\s*[.,\d ]+"
         final_amount = float(re.findall(regex, text, re.I)[0].replace('$', '').replace(' ', ''))
     return final_amount
+def textPreProcessing(inputtext):
+    text = re.sub(r"[,;@#?!&:]+", ' ', inputtext.lower())
+    text = text.replace("usd", "$")
+    text = text.replace('$ ', '$')
+    return text
+def extractMoney(text):
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(text)
+    extracted_text = [ent.text for ent in doc.ents if ent.label_ == 'MONEY']
+    regex = r"[£$€]\s*[.,\d ]+"
+    extracted_text.extend(re.findall(regex, text, re.I))
+    return extracted_text

@@ -46,9 +46,9 @@ def extract_amount(dirpath: str) -> float:
         extracted_text[i] = extracted_text[i].replace('$', '')
         try:
             extracted_text[i] = float(extracted_text[i].strip().replace(' ', '.'))
-        except:
+        except ValueError:
             extracted_text[i] = 0.0
-            #print("Cannot convert to float, taking value as 0.0")
+            print("Cannot convert to float, taking value as 0.0")
     if len(extracted_text) == 0 or extracted_text.count(extracted_text[0]) == len(extracted_text):
         for word in common_words:
             if word in token_list:
@@ -56,9 +56,8 @@ def extract_amount(dirpath: str) -> float:
                 amount = ".".join(token_list[index+1:index+2]).replace('$', '').replace(' ', '')
                 try:
                     final_amount = float(amount)
-                except:
-                    continue
-                    #print("Cannot convert to float, passing")
+                except ValueError:
+                    print("Cannot convert to float, passing")
     else: final_amount = max(extracted_text)
     if final_amount is None:
         regex = r"[£$€]\s*[.,\d ]+"
